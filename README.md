@@ -1,5 +1,7 @@
 # 📊 Revenue Analytics Dashboard
 
+![Dashboard Preview](https://raw.githubusercontent.com/mukherjeesourav687/revenue-analytics-dashboard/main/dashboard-preview.png)
+
 An interactive data visualisation dashboard built using Chart.js to analyse revenue, expenses, and profit trends.
 
 ---
