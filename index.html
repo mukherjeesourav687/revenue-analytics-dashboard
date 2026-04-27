@@ -1,0 +1,922 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Revenue Analytics Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      :root {
+        --bg-primary: #ffffff;
+        --bg-secondary: #f5f7fa;
+        --bg-tertiary: #e8ecf1;
+        --text-primary: #1a1a1a;
+        --text-secondary: #666666;
+        --border-color: #e0e0e0;
+        --accent-color: #3b82f6;
+        --success-color: #10b981;
+        --danger-color: #ef4444;
+        --warning-color: #f59e0b;
+        --shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+        --shadow-lg:
+          0 10px 15px -3px rgba(0, 0, 0, 0.1),
+          0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      }
+
+      html[data-theme="dark"] {
+        --bg-primary: #1a1a1a;
+        --bg-secondary: #2d2d2d;
+        --bg-tertiary: #404040;
+        --text-primary: #ffffff;
+        --text-secondary: #b0b0b0;
+        --border-color: #404040;
+        --accent-color: #60a5fa;
+        --success-color: #34d399;
+        --danger-color: #f87171;
+        --warning-color: #fbbf24;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          Cantarell, sans-serif;
+        background-color: var(--bg-secondary);
+        color: var(--text-primary);
+        transition:
+          background-color 0.3s ease,
+          color 0.3s ease;
+        line-height: 1.6;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 32px;
+        gap: 20px;
+        flex-wrap: wrap;
+      }
+
+      h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text-primary);
+      }
+
+      .header-controls {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .theme-toggle {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        padding: 8px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.2s ease;
+        color: var(--text-primary);
+      }
+
+      .theme-toggle:hover {
+        background: var(--bg-tertiary);
+      }
+
+      .btn {
+        background: var(--accent-color);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+      }
+
+      .btn:active {
+        transform: translateY(0);
+      }
+
+      .btn-secondary {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+      }
+
+      .controls {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 28px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .control-group {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .control-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      select,
+      input[type="month"] {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 14px;
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      select:hover,
+      input[type="month"]:hover {
+        border-color: var(--accent-color);
+      }
+
+      select:focus,
+      input[type="month"]:focus {
+        outline: none;
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+
+      .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 28px;
+      }
+
+      .metric-card {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        transition: all 0.3s ease;
+      }
+
+      .metric-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-lg);
+      }
+
+      .metric-label {
+        font-size: 12px;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+
+      .metric-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 8px;
+      }
+
+      .metric-change {
+        font-size: 13px;
+        font-weight: 500;
+      }
+
+      .metric-change.positive {
+        color: var(--success-color);
+      }
+
+      .metric-change.negative {
+        color: var(--danger-color);
+      }
+
+      .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 20px;
+      }
+
+      .chart-card {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        transition: all 0.3s ease;
+      }
+
+      .chart-card:hover {
+        box-shadow: var(--shadow-lg);
+      }
+
+      .chart-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .chart-card h2 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .chart-type-select {
+        font-size: 13px;
+        padding: 6px 10px;
+      }
+
+      .chart-container-wrapper {
+        position: relative;
+        min-height: 300px;
+      }
+
+      .loading-spinner {
+        display: none;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 10;
+      }
+
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid var(--bg-tertiary);
+        border-top: 4px solid var(--accent-color);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .spinner.active ~ canvas {
+        opacity: 0.5;
+      }
+
+      .loading-spinner.active {
+        display: block;
+      }
+
+      canvas {
+        transition: opacity 0.2s ease;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 16px;
+        }
+
+        h1 {
+          font-size: 22px;
+        }
+
+        header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .controls {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .control-group {
+          flex-direction: column;
+        }
+
+        .metrics-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .charts-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .metric-value {
+          font-size: 24px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          animation: none !important;
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>📊 Revenue Analytics</h1>
+        <div class="header-controls">
+          <button class="theme-toggle" id="themeToggle">🌙 Dark Mode</button>
+          <button class="btn" id="refreshBtn">↻ Refresh Data</button>
+        </div>
+      </header>
+
+      <div class="controls">
+        <div class="control-group">
+          <label class="control-label">Chart Type</label>
+          <select id="chartTypeSelect">
+            <option value="bar">Bar Chart</option>
+            <option value="line">Line Chart</option>
+            <option value="area">Area Chart</option>
+            <option value="radar">Radar Chart</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label class="control-label">Month Range</label>
+          <input type="month" id="monthFilter" />
+        </div>
+      </div>
+
+      <div class="metrics-grid" id="metricsContainer"></div>
+
+      <div class="charts-grid" id="chartsContainer"></div>
+    </div>
+
+    <script>
+      const app = {
+        charts: {},
+        currentTheme: localStorage.getItem("theme") || "light",
+        currentChartType: "bar",
+        selectedMonth: new Date().toISOString().slice(0, 7),
+        isLoading: false,
+        isFiltered: false,
+
+        originalData: {
+          months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+          revenue: [50000, 60000, 55000, 70000, 75000, 80000],
+          expenses: [30000, 35000, 32000, 40000, 42000, 45000],
+          profit: [20000, 25000, 23000, 30000, 33000, 35000],
+          categories: {
+            Reinvestment: 40,
+            Salary: 35,
+            Miscellaneous: 25,
+          },
+        },
+        data: {
+          months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+          revenue: [50000, 60000, 55000, 70000, 75000, 80000],
+          expenses: [30000, 35000, 32000, 40000, 42000, 45000],
+          profit: [20000, 25000, 23000, 30000, 33000, 35000],
+          categories: {
+            Reinvestment: 40,
+            Salary: 35,
+            Miscellaneous: 25,
+          },
+        },
+
+        init() {
+          this.applyTheme();
+          this.setupEventListeners();
+          this.renderMetrics();
+          this.renderCharts();
+          this.setCurrentMonth();
+        },
+
+        setupEventListeners() {
+          document
+            .getElementById("themeToggle")
+            .addEventListener("click", () => this.toggleTheme());
+          document
+            .getElementById("refreshBtn")
+            .addEventListener("click", () => this.refreshData());
+          document
+            .getElementById("chartTypeSelect")
+            .addEventListener("change", (e) => {
+              this.currentChartType = e.target.value;
+              this.updateCharts();
+            });
+          document
+            .getElementById("monthFilter")
+            .addEventListener("change", (e) => {
+              this.selectedMonth = e.target.value;
+              this.filterData();
+            });
+        },
+
+        toggleTheme() {
+          this.currentTheme = this.currentTheme === "light" ? "dark" : "light";
+          localStorage.setItem("theme", this.currentTheme);
+          this.applyTheme();
+        },
+
+        applyTheme() {
+          document.documentElement.setAttribute(
+            "data-theme",
+            this.currentTheme,
+          );
+          const btn = document.getElementById("themeToggle");
+          btn.textContent =
+            this.currentTheme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode";
+        },
+
+        getChartConfig(type, dataset) {
+          const colors = {
+            revenue: "rgb(59, 130, 246)",
+            expenses: "rgb(239, 68, 68)",
+            profit: "rgb(16, 185, 129)",
+          };
+
+          const baseConfig = {
+            type: type,
+            data: {
+              labels: this.data.months,
+              datasets: dataset,
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: true,
+              plugins: {
+                legend: {
+                  labels: {
+                    color: getComputedStyle(document.documentElement)
+                      .getPropertyValue("--text-primary")
+                      .trim(),
+                    font: { size: 12, family: "system-ui" },
+                    padding: 15,
+                    usePointStyle: true,
+                  },
+                },
+                tooltip: {
+                  backgroundColor: "rgba(0, 0, 0, 0.8)",
+                  padding: 12,
+                  titleFont: { size: 13, weight: "bold" },
+                  bodyFont: { size: 12 },
+                  borderColor: "rgba(255, 255, 255, 0.2)",
+                  borderWidth: 1,
+                  displayColors: true,
+                  callbacks: {
+                    label: (context) => {
+                      let label = context.dataset.label || "";
+                      if (label) label += ": ";
+                      label += "$" + context.parsed.y.toLocaleString();
+                      return label;
+                    },
+                  },
+                },
+              },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  ticks: {
+                    color: getComputedStyle(document.documentElement)
+                      .getPropertyValue("--text-secondary")
+                      .trim(),
+                    callback: (value) => "$" + (value / 1000).toFixed(0) + "K",
+                    font: { size: 11 },
+                  },
+                  grid: {
+                    color: getComputedStyle(document.documentElement)
+                      .getPropertyValue("--border-color")
+                      .trim(),
+                    drawBorder: false,
+                  },
+                },
+                x: {
+                  ticks: {
+                    color: getComputedStyle(document.documentElement)
+                      .getPropertyValue("--text-secondary")
+                      .trim(),
+                    font: { size: 11 },
+                  },
+                  grid: {
+                    display: false,
+                    drawBorder: false,
+                  },
+                },
+              },
+              animation: {
+                duration: 750,
+                easing: "easeInOutQuart",
+              },
+            },
+          };
+
+          if (type === "area") {
+            baseConfig.type = "line";
+            baseConfig.options.scales.y.stacked = true;
+            baseConfig.data.datasets.forEach((d) => {
+              d.fill = true;
+              d.tension = 0.4;
+              d.borderWidth = 2;
+            });
+          } else if (type === "line") {
+            baseConfig.data.datasets.forEach((d) => {
+              d.fill = false;
+              d.tension = 0.4;
+              d.borderWidth = 2;
+            });
+          } else if (type === "bar") {
+            baseConfig.options.scales.x.stacked = false;
+          } else if (type === "radar") {
+            baseConfig.options.scales = {
+              r: {
+                ticks: {
+                  color: getComputedStyle(document.documentElement)
+                    .getPropertyValue("--text-secondary")
+                    .trim(),
+                  callback: (value) => "$" + (value / 1000).toFixed(0) + "K",
+                },
+                grid: {
+                  color: getComputedStyle(document.documentElement)
+                    .getPropertyValue("--border-color")
+                    .trim(),
+                },
+              },
+            };
+            baseConfig.data.datasets.forEach((d, i) => {
+              d.fill = true;
+              d.borderWidth = 2;
+              d.pointRadius = 4;
+              d.pointHoverRadius = 6;
+            });
+          }
+
+          return baseConfig;
+        },
+
+        renderMetrics() {
+          const totalRevenue = this.data.revenue.reduce((a, b) => a + b, 0);
+          const totalExpenses = this.data.expenses.reduce((a, b) => a + b, 0);
+          const totalProfit = this.data.profit.reduce((a, b) => a + b, 0);
+          const avgRevenue = (totalRevenue / this.data.revenue.length).toFixed(
+            0,
+          );
+
+          const metrics = [
+            {
+              label: "Total Revenue",
+              value: "$" + totalRevenue.toLocaleString(),
+              change: "+12.5%",
+              positive: true,
+            },
+            {
+              label: "Total Expenses",
+              value: "$" + totalExpenses.toLocaleString(),
+              change: "+2.3%",
+              positive: false,
+            },
+            {
+              label: "Total Profit",
+              value: "$" + totalProfit.toLocaleString(),
+              change: "+18.7%",
+              positive: true,
+            },
+            {
+              label: "Avg Monthly Revenue",
+              value: "$" + parseInt(avgRevenue).toLocaleString(),
+              change: "From " + this.data.months[0],
+              positive: true,
+            },
+          ];
+
+          const container = document.getElementById("metricsContainer");
+          container.innerHTML = metrics
+            .map(
+              (m) => `
+                    <div class="metric-card">
+                        <div class="metric-label">${m.label}</div>
+                        <div class="metric-value">${m.value}</div>
+                        <div class="metric-change ${m.positive ? "positive" : "negative"}">
+                            ${m.positive ? "↗" : "↘"} ${m.change}
+                        </div>
+                    </div>
+                `,
+            )
+            .join("");
+        },
+
+        renderCharts() {
+          const container = document.getElementById("chartsContainer");
+
+          const chartConfigs = [
+            {
+              id: "revenueChart",
+              title: "Revenue vs Expenses vs Profit",
+              datasets: [
+                {
+                  label: "Revenue",
+                  data: this.data.revenue,
+                  borderColor: "rgb(59, 130, 246)",
+                  backgroundColor: "rgba(59, 130, 246, 0.1)",
+                },
+                {
+                  label: "Expenses",
+                  data: this.data.expenses,
+                  borderColor: "rgb(239, 68, 68)",
+                  backgroundColor: "rgba(239, 68, 68, 0.1)",
+                },
+                {
+                  label: "Profit",
+                  data: this.data.profit,
+                  borderColor: "rgb(16, 185, 129)",
+                  backgroundColor: "rgba(16, 185, 129, 0.1)",
+                },
+              ],
+            },
+            {
+              id: "categoryChart",
+              title: "Expense Distribution",
+              type: "pie",
+              datasets: [
+                {
+                  data: (() => {
+                    const totalExpenses = this.data.expenses.reduce(
+                      (a, b) => a + b,
+                      0,
+                    );
+                    return Object.values(this.data.categories).map((percent) =>
+                      Math.round((totalExpenses * percent) / 100),
+                    );
+                  })(),
+                  backgroundColor: [
+                    "rgba(59, 130, 246, 0.8)",
+                    "rgba(239, 68, 68, 0.8)",
+                    "rgba(16, 185, 129, 0.8)",
+                  ],
+                  borderColor: "var(--bg-primary)",
+                  borderWidth: 2,
+                },
+              ],
+              labels: Object.keys(this.data.categories),
+            },
+          ];
+
+          container.innerHTML = chartConfigs
+            .map(
+              (config, idx) => `
+                    <div class="chart-card">
+                        <div class="chart-card-header">
+                            <h2>${config.title}</h2>
+                        </div>
+                        <div class="chart-container-wrapper">
+                            <div class="loading-spinner" id="spinner-${config.id}">
+                                <div class="spinner"></div>
+                            </div>
+                            <canvas id="${config.id}"></canvas>
+                        </div>
+                    </div>
+                `,
+            )
+            .join("");
+
+          this.createCharts(chartConfigs);
+        },
+
+        createCharts(configs) {
+          configs.forEach((config) => {
+            const canvas = document.getElementById(config.id);
+            if (!canvas) return;
+
+            if (config.type === "pie") {
+              this.charts[config.id] = new Chart(canvas, {
+                type: "doughnut",
+                data: {
+                  labels: config.labels,
+                  datasets: config.datasets,
+                },
+                options: {
+                  responsive: true,
+                  maintainAspectRatio: true,
+                  plugins: {
+                    legend: {
+                      labels: {
+                        color: getComputedStyle(document.documentElement)
+                          .getPropertyValue("--text-primary")
+                          .trim(),
+                        font: { size: 12 },
+                        padding: 15,
+                      },
+                    },
+                    tooltip: {
+                      callbacks: {
+                        label: (context) => {
+                          let label = context.label || "";
+                          if (label) label += ": $";
+                          label += context.parsed.toLocaleString();
+                          return label;
+                        },
+                      },
+                    },
+                  },
+                  animation: { duration: 750 },
+                },
+              });
+            } else {
+              const chartConfig = this.getChartConfig(
+                this.currentChartType,
+                config.datasets,
+              );
+              chartConfig.data.labels = this.data.months;
+              this.charts[config.id] = new Chart(canvas, chartConfig);
+            }
+          });
+        },
+
+        updateCharts() {
+          const revenueChart = this.charts["revenueChart"];
+          if (revenueChart) {
+            revenueChart.destroy();
+            const config = this.getChartConfig(this.currentChartType, [
+              {
+                label: "Revenue",
+                data: this.data.revenue,
+                borderColor: "rgb(59, 130, 246)",
+                backgroundColor: "rgba(59, 130, 246, 0.1)",
+              },
+              {
+                label: "Expenses",
+                data: this.data.expenses,
+                borderColor: "rgb(239, 68, 68)",
+                backgroundColor: "rgba(239, 68, 68, 0.1)",
+              },
+              {
+                label: "Profit",
+                data: this.data.profit,
+                borderColor: "rgb(16, 185, 129)",
+                backgroundColor: "rgba(16, 185, 129, 0.1)",
+              },
+            ]);
+            config.data.labels = this.data.months;
+            const canvas = document.getElementById("revenueChart");
+            this.charts["revenueChart"] = new Chart(canvas, config);
+          }
+
+          const categoryChart = this.charts["categoryChart"];
+          if (categoryChart) {
+            categoryChart.destroy();
+            const totalExpenses = this.data.expenses.reduce((a, b) => a + b, 0);
+            const categoryValues = Object.values(this.data.categories).map(
+              (percent) => Math.round((totalExpenses * percent) / 100),
+            );
+            this.charts["categoryChart"] = new Chart(
+              document.getElementById("categoryChart"),
+              {
+                type: "doughnut",
+                data: {
+                  labels: Object.keys(this.data.categories),
+                  datasets: [
+                    {
+                      data: categoryValues,
+                      backgroundColor: [
+                        "rgba(59, 130, 246, 0.8)",
+                        "rgba(239, 68, 68, 0.8)",
+                        "rgba(16, 185, 129, 0.8)",
+                      ],
+                      borderColor: getComputedStyle(document.documentElement)
+                        .getPropertyValue("--bg-primary")
+                        .trim(),
+                      borderWidth: 2,
+                    },
+                  ],
+                },
+                options: {
+                  responsive: true,
+                  maintainAspectRatio: true,
+                  plugins: {
+                    legend: {
+                      labels: {
+                        color: getComputedStyle(document.documentElement)
+                          .getPropertyValue("--text-primary")
+                          .trim(),
+                        font: { size: 12 },
+                        padding: 15,
+                      },
+                    },
+                    tooltip: {
+                      callbacks: {
+                        label: (context) => {
+                          let label = context.label || "";
+                          if (label) label += ": $";
+                          label += context.parsed.toLocaleString();
+                          return label;
+                        },
+                      },
+                    },
+                  },
+                  animation: { duration: 750 },
+                },
+              },
+            );
+          }
+        },
+
+        filterData() {
+          if (!this.selectedMonth) {
+            this.resetFilter();
+            return;
+          }
+
+          const [year, monthStr] = this.selectedMonth.split("-");
+          const monthNum = parseInt(monthStr);
+
+          if (monthNum < 1 || monthNum > 12) {
+            this.resetFilter();
+            return;
+          }
+
+          if (monthNum > this.originalData.months.length) {
+            this.resetFilter();
+            return;
+          }
+
+          this.isFiltered = true;
+          const monthIndex = monthNum - 1;
+          const monthName = this.originalData.months[monthIndex];
+
+          this.data.months = [monthName];
+          this.data.revenue = [this.originalData.revenue[monthIndex]];
+          this.data.expenses = [this.originalData.expenses[monthIndex]];
+          this.data.profit = [this.originalData.profit[monthIndex]];
+
+          this.renderMetrics();
+          this.updateCharts();
+        },
+
+        resetFilter() {
+          this.isFiltered = false;
+          this.data = JSON.parse(JSON.stringify(this.originalData));
+          this.renderMetrics();
+          this.updateCharts();
+        },
+
+        async refreshData() {
+          this.setLoading(true);
+          await new Promise((resolve) => setTimeout(resolve, 1200));
+
+          this.data.revenue = this.data.revenue.map(
+            (v) => v + Math.random() * 20000 - 10000,
+          );
+          this.data.expenses = this.data.expenses.map(
+            (v) => v + Math.random() * 10000 - 5000,
+          );
+          this.data.profit = this.data.profit.map(
+            (_, i) => this.data.revenue[i] - this.data.expenses[i],
+          );
+
+          this.renderMetrics();
+          this.updateCharts();
+          this.setLoading(false);
+        },
+
+        setLoading(state) {
+          this.isLoading = state;
+          document.querySelectorAll(".loading-spinner").forEach((spinner) => {
+            spinner.classList.toggle("active", state);
+          });
+        },
+
+        setCurrentMonth() {
+          const today = new Date();
+          document.getElementById("monthFilter").value = today
+            .toISOString()
+            .slice(0, 7);
+        },
+      };
+
+      app.init();
+    </script>
+  </body>
+</html>
